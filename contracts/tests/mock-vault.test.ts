@@ -391,4 +391,309 @@ describe("YieldFlow Mock Vault Tests", () => {
       expect(result).toBeUint(0);
     });
   });
+
+  describe("Emergency Pause Mechanism", () => {
+    it("allows owner to pause the vault", () => {
+      const { result } = simnet.callPublicFn(
+        "mock-vault",
+        "pause",
+        [],
+        deployer
+      );
+
+      expect(result).toBeOk(Cl.bool(true));
+    });
+
+    it("sets paused state to true when paused", () => {
+      simnet.callPublicFn("mock-vault", "pause", [], deployer);
+
+      const { result } = simnet.callReadOnlyFn(
+        "mock-vault",
+        "is-paused",
+        [],
+        deployer
+      );
+
+      expect(result).toBeBool(true);
+    });
+
+    it("rejects deposits when vault is paused", () => {
+      simnet.callPublicFn("mock-vault", "pause", [], deployer);
+
+      const { result } = simnet.callPublicFn(
+        "mock-vault",
+        "deposit",
+        [Cl.uint(1000000)],
+        wallet1
+      );
+
+      expect(result).toBeErr(Cl.uint(405)); // ERR_VAULT_PAUSED
+    });
+
+    it("allows owner to unpause the vault", () => {
+      simnet.callPublicFn("mock-vault", "pause", [], deployer);
+
+      const { result } = simnet.callPublicFn(
+        "mock-vault",
+        "unpause",
+        [],
+        deployer
+      );
+
+      expect(result).toBeOk(Cl.bool(true));
+    });
+
+    it("allows deposits after unpausing", () => {
+      simnet.callPublicFn("mock-vault", "pause", [], deployer);
+      simnet.callPublicFn("mock-vault", "unpause", [], deployer);
+
+      const { result } = simnet.callPublicFn(
+        "mock-vault",
+        "deposit",
+        [Cl.uint(1000000)],
+        wallet1
+      );
+
+      expect(result).toBeOk(Cl.uint(1000000));
+    });
+
+    it("rejects pause from non-owner", () => {
+      const { result } = simnet.callPublicFn(
+        "mock-vault",
+        "pause",
+        [],
+        wallet1
+      );
+
+      expect(result).toBeErr(Cl.uint(401)); // ERR_NOT_AUTHORIZED
+    });
+
+    it("rejects unpause from non-owner", () => {
+      simnet.callPublicFn("mock-vault", "pause", [], deployer);
+
+      const { result } = simnet.callPublicFn(
+        "mock-vault",
+        "unpause",
+        [],
+        wallet1
+      );
+
+      expect(result).toBeErr(Cl.uint(401)); // ERR_NOT_AUTHORIZED
+    });
+  });
+
+  describe("Withdraw with Yield", () => {
+    it("allows withdrawal with accrued yield", () => {
+      const depositAmount = 100000000; // 100 USDCx
+
+      simnet.callPublicFn(
+        "mock-vault",
+        "deposit",
+        [Cl.uint(depositAmount)],
+        wallet1
+      );
+
+      // Mine blocks to accrue yield
+      simnet.mineEmptyBlocks(144);
+
+      const { result } = simnet.callPublicFn(
+        "mock-vault",
+        "withdraw-with-yield",
+        [],
+        wallet1
+      );
+
+      // Should return principal + yield
+      const expectedYield = 32832; // (100000000 * 144 * 228) / 100000000
+      expect(result).toBeOk(Cl.uint(depositAmount + expectedYield));
+    });
+
+    it("deletes deposit record after withdraw-with-yield", () => {
+      simnet.callPublicFn(
+        "mock-vault",
+        "deposit",
+        [Cl.uint(5000000)],
+        wallet1
+      );
+
+      simnet.mineEmptyBlocks(50);
+
+      simnet.callPublicFn(
+        "mock-vault",
+        "withdraw-with-yield",
+        [],
+        wallet1
+      );
+
+      const { result } = simnet.callReadOnlyFn(
+        "mock-vault",
+        "get-deposit-amount",
+        [Cl.principal(wallet1)],
+        wallet1
+      );
+
+      expect(result).toBeUint(0);
+    });
+
+    it("burns all receipt tokens on withdraw-with-yield", () => {
+      const depositAmount = 3000000;
+
+      simnet.callPublicFn(
+        "mock-vault",
+        "deposit",
+        [Cl.uint(depositAmount)],
+        wallet1
+      );
+
+      simnet.mineEmptyBlocks(100);
+
+      simnet.callPublicFn(
+        "mock-vault",
+        "withdraw-with-yield",
+        [],
+        wallet1
+      );
+
+      const { result } = simnet.callReadOnlyFn(
+        "mock-vault",
+        "get-receipt-balance",
+        [Cl.principal(wallet1)],
+        wallet1
+      );
+
+      expect(result).toBeUint(0);
+    });
+
+    it("rejects withdraw-with-yield when user has no deposits", () => {
+      const { result } = simnet.callPublicFn(
+        "mock-vault",
+        "withdraw-with-yield",
+        [],
+        wallet2
+      );
+
+      expect(result).toBeErr(Cl.uint(402)); // ERR_INSUFFICIENT_BALANCE
+    });
+
+    it("updates total deposits after withdraw-with-yield", () => {
+      const deposit1 = 5000000;
+      const deposit2 = 3000000;
+
+      simnet.callPublicFn("mock-vault", "deposit", [Cl.uint(deposit1)], wallet1);
+      simnet.callPublicFn("mock-vault", "deposit", [Cl.uint(deposit2)], wallet2);
+
+      simnet.mineEmptyBlocks(50);
+
+      simnet.callPublicFn("mock-vault", "withdraw-with-yield", [], wallet1);
+
+      const { result } = simnet.callReadOnlyFn(
+        "mock-vault",
+        "get-total-deposits",
+        [],
+        deployer
+      );
+
+      expect(result).toBeUint(deposit2);
+    });
+  });
+
+  describe("Admin Configuration", () => {
+    it("allows owner to update vault name", () => {
+      const newName = "Updated Vault Name";
+
+      const { result } = simnet.callPublicFn(
+        "mock-vault",
+        "set-vault-name",
+        [Cl.stringAscii(newName)],
+        deployer
+      );
+
+      expect(result).toBeOk(Cl.bool(true));
+    });
+
+    it("updates vault name correctly", () => {
+      const newName = "My Custom Vault";
+
+      simnet.callPublicFn(
+        "mock-vault",
+        "set-vault-name",
+        [Cl.stringAscii(newName)],
+        deployer
+      );
+
+      const { result } = simnet.callReadOnlyFn(
+        "mock-vault",
+        "get-vault-info",
+        [],
+        deployer
+      );
+
+      expect(result).toBeTuple({
+        name: Cl.stringAscii(newName),
+        symbol: Cl.stringAscii("YF-VAULT"),
+        apy: Cl.uint(1200),
+        tvl: Cl.uint(0)
+      });
+    });
+
+    it("allows owner to update vault symbol", () => {
+      const newSymbol = "NEWVLT";
+
+      const { result } = simnet.callPublicFn(
+        "mock-vault",
+        "set-vault-symbol",
+        [Cl.stringAscii(newSymbol)],
+        deployer
+      );
+
+      expect(result).toBeOk(Cl.bool(true));
+    });
+
+    it("updates vault symbol correctly", () => {
+      const newSymbol = "CUSTOM";
+
+      simnet.callPublicFn(
+        "mock-vault",
+        "set-vault-symbol",
+        [Cl.stringAscii(newSymbol)],
+        deployer
+      );
+
+      const { result } = simnet.callReadOnlyFn(
+        "mock-vault",
+        "get-vault-info",
+        [],
+        deployer
+      );
+
+      expect(result).toBeTuple({
+        name: Cl.stringAscii("YieldFlow Mock Vault"),
+        symbol: Cl.stringAscii(newSymbol),
+        apy: Cl.uint(1200),
+        tvl: Cl.uint(0)
+      });
+    });
+
+    it("rejects vault name update from non-owner", () => {
+      const { result } = simnet.callPublicFn(
+        "mock-vault",
+        "set-vault-name",
+        [Cl.stringAscii("Hacked Vault")],
+        wallet1
+      );
+
+      expect(result).toBeErr(Cl.uint(401)); // ERR_NOT_AUTHORIZED
+    });
+
+    it("rejects vault symbol update from non-owner", () => {
+      const { result } = simnet.callPublicFn(
+        "mock-vault",
+        "set-vault-symbol",
+        [Cl.stringAscii("HACK")],
+        wallet1
+      );
+
+      expect(result).toBeErr(Cl.uint(401)); // ERR_NOT_AUTHORIZED
+    });
+  });
 });
