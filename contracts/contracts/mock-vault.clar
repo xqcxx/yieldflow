@@ -124,6 +124,43 @@
   )
 )
 
+;; Withdraw with accrued yield
+;; @returns (response uint uint): The total withdrawn amount including yield
+(define-public (withdraw-with-yield)
+  (let (
+    (caller tx-sender)
+    (deposit-info (unwrap! (map-get? deposits caller) ERR_INSUFFICIENT_BALANCE))
+    (deposited-amount (get amount deposit-info))
+    (total-with-yield (get-balance-with-yield caller))
+    (yield-earned (- total-with-yield deposited-amount))
+  )
+    ;; Burn all receipt tokens
+    (try! (ft-burn? yf-receipt deposited-amount caller))
+    
+    ;; Note: In production, USDCx (principal + yield) would be transferred back here
+    ;; For this mock, we just update state and emit the yield amount
+    
+    ;; Delete deposit record (full withdrawal)
+    (map-delete deposits caller)
+    
+    ;; Update total deposits
+    (var-set total-deposits (- (var-get total-deposits) deposited-amount))
+    
+    ;; Emit withdrawal event with yield info
+    (print {
+      event: "withdraw-with-yield",
+      user: caller,
+      principal: deposited-amount,
+      yield: yield-earned,
+      total: total-with-yield,
+      block: block-height,
+      total-deposits: (var-get total-deposits)
+    })
+    
+    (ok total-with-yield)
+  )
+)
+
 ;; Read-only functions
 
 ;; Get the principal amount deposited (without yield)
