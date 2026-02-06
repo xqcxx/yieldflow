@@ -269,3 +269,27 @@
     (ok true)
   )
 )
+
+;; Update vault name (owner only)
+;; @param new-name: New vault name
+;; @returns (response bool uint): Success or error
+(define-public (set-vault-name (new-name (string-ascii 32)))
+  (begin
+    (asserts! (is-eq tx-sender CONTRACT_OWNER) ERR_NOT_AUTHORIZED)
+    (var-set vault-name new-name)
+    (print { event: "vault-name-updated", new-name: new-name, by: tx-sender })
+    (ok true)
+  )
+)
+
+;; Update vault symbol (owner only)
+;; @param new-symbol: New vault symbol
+;; @returns (response bool uint): Success or error
+(define-public (set-vault-symbol (new-symbol (string-ascii 10)))
+  (begin
+    (asserts! (is-eq tx-sender CONTRACT_OWNER) ERR_NOT_AUTHORIZED)
+    (var-set vault-symbol new-symbol)
+    (print { event: "vault-symbol-updated", new-symbol: new-symbol, by: tx-sender })
+    (ok true)
+  )
+)
