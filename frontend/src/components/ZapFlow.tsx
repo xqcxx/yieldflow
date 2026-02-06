@@ -20,6 +20,8 @@ interface ZapFlowProps {
 export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
   const [amount, setAmount] = useState('');
   const [step, setStep] = useState<'input' | 'approve' | 'deposit' | 'bridge' | 'finalize'>('input');
+  const [error, setError] = useState<string | null>(null);
+  const [txHash, setTxHash] = useState<string | null>(null);
   
   const { address: ethAddress } = useAccount();
   const { stacksWallet, setZapState } = useAppStore();
@@ -29,6 +31,7 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
     if (!amount || !ethAddress) return;
     
     try {
+      setError(null);
       setStep('approve');
       const amountWei = parseUnits(amount, 6); // USDC has 6 decimals
       
@@ -39,8 +42,11 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
         args: [SEPOLIA_XRESERVE, amountWei],
       });
     } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Approval failed';
       console.error('Approval failed:', error);
-      setZapState({ status: 'error', error: 'Approval failed' });
+      setError(errorMsg);
+      setZapState({ status: 'error', error: errorMsg });
+      setStep('input');
     }
   };
 
@@ -48,6 +54,7 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
     if (!amount || !ethAddress || !stacksWallet) return;
     
     try {
+      setError(null);
       setStep('deposit');
       setZapState({ status: 'depositing' });
       
@@ -71,8 +78,11 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
         stacksAddress: stacksWallet.address,
       });
     } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Deposit failed';
       console.error('Deposit failed:', error);
-      setZapState({ status: 'error', error: 'Deposit failed' });
+      setError(errorMsg);
+      setZapState({ status: 'error', error: errorMsg });
+      setStep('approve');
     }
   };
 
@@ -80,6 +90,7 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
     if (!stacksWallet || !amount) return;
     
     try {
+      setError(null);
       setStep('finalize');
       setZapState({ status: 'finalizing' });
       
@@ -101,15 +112,22 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
         postConditions,
         onFinish: (data: any) => {
           console.log('Stacks tx:', data.txId);
+          setTxHash(data.txId);
           setZapState({ status: 'complete' });
         },
         onCancel: () => {
-          setZapState({ status: 'error', error: 'Transaction cancelled' });
+          const cancelMsg = 'Transaction cancelled by user';
+          setError(cancelMsg);
+          setZapState({ status: 'error', error: cancelMsg });
+          setStep('bridge');
         },
       });
     } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Failed to finalize deposit';
       console.error('Finalize failed:', error);
-      setZapState({ status: 'error', error: 'Failed to finalize' });
+      setError(errorMsg);
+      setZapState({ status: 'error', error: errorMsg });
+      setStep('bridge');
     }
   };
 
@@ -140,6 +158,13 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
             </div>
           ))}
         </div>
+
+        {/* Error Display */}
+        {error && (
+          <div className="mb-4 p-3 bg-red-900/30 border border-red-500 rounded-lg">
+            <p className="text-red-400 text-sm">{error}</p>
+          </div>
+        )}
 
         {/* Input Amount */}
         {step === 'input' && (
@@ -212,6 +237,19 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
             <p className="text-slate-400">
               Your funds are now earning {strategyName} yield on Stacks.
             </p>
+            {txHash && (
+              <div className="text-xs text-slate-500 break-all">
+                <p className="mb-1">Transaction Hash:</p>
+                <a 
+                  href={`https://explorer.hiro.so/txid/${txHash}?chain=testnet`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-400 hover:text-blue-300 underline"
+                >
+                  {txHash}
+                </a>
+              </div>
+            )}
             <button
               onClick={onClose}
               className="w-full py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors"
