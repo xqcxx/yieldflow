@@ -8,6 +8,7 @@
 (define-constant ERR_INSUFFICIENT_BALANCE (err u402))
 (define-constant ERR_ZERO_AMOUNT (err u403))
 (define-constant ERR_TRANSFER_FAILED (err u404))
+(define-constant ERR_VAULT_PAUSED (err u405))
 
 ;; Vault parameters
 ;; APY: 12% annual
@@ -33,6 +34,7 @@
 (define-data-var total-deposits uint u0)
 (define-data-var vault-name (string-ascii 32) "YieldFlow Mock Vault")
 (define-data-var vault-symbol (string-ascii 10) "YF-VAULT")
+(define-data-var paused bool false)
 
 ;; Public functions
 
@@ -42,6 +44,7 @@
 (define-public (deposit (amount uint))
   (begin
     ;; Validations
+    (asserts! (not (var-get paused)) ERR_VAULT_PAUSED)
     (asserts! (> amount u0) ERR_ZERO_AMOUNT)
     
     ;; Note: In a production contract, USDCx would be transferred here
@@ -197,5 +200,35 @@
       (- balance-with-yield principal-amount)
       u0
     )
+  )
+)
+
+;; Check if vault is paused
+;; @returns bool: True if paused, false otherwise
+(define-read-only (is-paused)
+  (var-get paused)
+)
+
+;; Admin functions
+
+;; Emergency pause: stops all deposits (owner only)
+;; @returns (response bool uint): Success or error
+(define-public (pause)
+  (begin
+    (asserts! (is-eq tx-sender CONTRACT_OWNER) ERR_NOT_AUTHORIZED)
+    (var-set paused true)
+    (print { event: "vault-paused", by: tx-sender, block: block-height })
+    (ok true)
+  )
+)
+
+;; Unpause: resumes deposits (owner only)
+;; @returns (response bool uint): Success or error
+(define-public (unpause)
+  (begin
+    (asserts! (is-eq tx-sender CONTRACT_OWNER) ERR_NOT_AUTHORIZED)
+    (var-set paused false)
+    (print { event: "vault-unpaused", by: tx-sender, block: block-height })
+    (ok true)
   )
 )
