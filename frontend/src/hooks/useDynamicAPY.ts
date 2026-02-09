@@ -10,17 +10,21 @@ interface APYData {
 // Simulated protocol APY fetching (in production, fetch from actual DeFi protocols)
 const fetchProtocolAPY = async (protocolId: string): Promise<number> => {
   // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
+  await new Promise(resolve => setTimeout(resolve, 800));
   
-  // Mock APY data with some variance
+  // Mock APY data with realistic variance based on market conditions
   const baseAPYs: Record<string, number> = {
     'mock-vault': 12.0,
     'zest-lending': 8.5,
     'bitflow-lp': 18.2,
   };
   
-  const variance = (Math.random() - 0.5) * 2; // +/- 1%
-  return (baseAPYs[protocolId] || 0) + variance;
+  // Add time-based variance to simulate market changes
+  const hourOfDay = new Date().getHours();
+  const timeVariance = Math.sin(hourOfDay / 24 * Math.PI * 2) * 0.5;
+  const randomVariance = (Math.random() - 0.5) * 1.5;
+  
+  return (baseAPYs[protocolId] || 0) + timeVariance + randomVariance;
 };
 
 export function useDynamicAPY(protocolId: string): APYData {
