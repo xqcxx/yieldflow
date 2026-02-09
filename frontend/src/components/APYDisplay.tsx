@@ -8,7 +8,7 @@ interface APYDisplayProps {
 export function APYDisplay({ apy, isLoading, error, lastUpdated }: APYDisplayProps) {
   if (error) {
     return (
-      <div className="text-2xl font-bold text-slate-400">
+      <div className="text-2xl font-bold text-slate-400" title="Failed to load APY">
         ---%
       </div>
     );
@@ -26,9 +26,17 @@ export function APYDisplay({ apy, isLoading, error, lastUpdated }: APYDisplayPro
     ? Math.floor((Date.now() - lastUpdated.getTime()) / 1000)
     : null;
 
+  // Determine color based on APY value
+  const getAPYColor = (value: number) => {
+    if (value >= 15) return 'text-green-400';
+    if (value >= 10) return 'text-emerald-400';
+    if (value >= 5) return 'text-yellow-400';
+    return 'text-orange-400';
+  };
+
   return (
     <div>
-      <div className="text-2xl font-bold text-green-400">
+      <div className={`text-2xl font-bold ${getAPYColor(apy)}`}>
         {apy.toFixed(2)}%
       </div>
       {timeSinceUpdate !== null && timeSinceUpdate < 120 && (
