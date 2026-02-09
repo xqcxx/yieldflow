@@ -78,11 +78,19 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
   const handleApprove = async () => {
     if (!amount || !ethAddress) return;
     
+    // Check if user has sufficient balance
+    const amountWei = parseUnits(amount, 6);
+    if (amountWei > balance) {
+      const insufficientMsg = `Insufficient balance. You have ${formattedBalance} USDC but need ${amount} USDC`;
+      setError(insufficientMsg);
+      toast.showError(insufficientMsg);
+      return;
+    }
+    
     try {
       setError(null);
       setStep('approve');
       const loadingToast = toast.showLoading('Approving USDC...');
-      const amountWei = parseUnits(amount, 6); // USDC has 6 decimals
       
       writeContract({
         address: SEPOLIA_USDC,
