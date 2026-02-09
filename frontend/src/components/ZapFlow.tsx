@@ -6,7 +6,9 @@ import { Pc, Cl } from '@stacks/transactions';
 import { useAppStore } from '../stores/appStore';
 import { useToast } from '../contexts/ToastContext';
 import { useGasEstimation } from '../hooks/useGasEstimation';
+import { useUSDCBalance } from '../hooks/useUSDCBalance';
 import { GasFeeDisplay } from './GasFeeDisplay';
+import { BalanceDisplay } from './BalanceDisplay';
 import {
   SEPOLIA_USDC,
   SEPOLIA_XRESERVE,
@@ -30,6 +32,7 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
   const { stacksWallet, setZapState } = useAppStore();
   const { writeContract } = useWriteContract();
   const toast = useToast();
+  const { balance, formattedBalance, isLoading: balanceLoading, error: balanceError } = useUSDCBalance();
 
   // Prepare approval transaction data for gas estimation
   const approvalData = useMemo(() => {
@@ -249,6 +252,12 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
               <p>• Connected: {ethAddress?.slice(0, 6)}...{ethAddress?.slice(-4)}</p>
               <p>• Stacks: {stacksWallet?.address.slice(0, 6)}...{stacksWallet?.address.slice(-4)}</p>
             </div>
+
+            <BalanceDisplay 
+              balance={formattedBalance}
+              isLoading={balanceLoading}
+              error={balanceError}
+            />
 
             {amount && (
               <GasFeeDisplay
