@@ -104,6 +104,7 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
       setError(null);
       setStep('finalize');
       setZapState({ status: 'finalizing' });
+      const loadingToast = toast.showLoading('Finalizing deposit on Stacks...');
       
       const amountMicroUnits = BigInt(parseFloat(amount) * 1_000_000);
       
@@ -125,11 +126,18 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
           console.log('Stacks tx:', data.txId);
           setTxHash(data.txId);
           setZapState({ status: 'complete' });
+          toast.dismissToast(loadingToast);
+          toast.showTransactionSuccess(
+            data.txId,
+            'https://explorer.hiro.so/txid/'
+          );
         },
         onCancel: () => {
           const cancelMsg = 'Transaction cancelled by user';
           setError(cancelMsg);
           setZapState({ status: 'error', error: cancelMsg });
+          toast.dismissToast(loadingToast);
+          toast.showError(cancelMsg);
           setStep('bridge');
         },
       });
@@ -138,6 +146,7 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
       console.error('Finalize failed:', error);
       setError(errorMsg);
       setZapState({ status: 'error', error: errorMsg });
+      toast.showError(errorMsg);
       setStep('bridge');
     }
   };
