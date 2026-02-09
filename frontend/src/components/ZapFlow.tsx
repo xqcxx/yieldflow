@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useAccount, useWriteContract } from 'wagmi';
-import { parseUnits } from 'viem';
+import { parseUnits, encodeFunctionData } from 'viem';
 import { openContractCall } from '@stacks/connect';
 import { Pc, Cl } from '@stacks/transactions';
 import { useAppStore } from '../stores/appStore';
 import { useToast } from '../contexts/ToastContext';
+import { useGasEstimation } from '../hooks/useGasEstimation';
+import { GasFeeDisplay } from './GasFeeDisplay';
 import {
   SEPOLIA_USDC,
   SEPOLIA_XRESERVE,
@@ -28,6 +30,47 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
   const { stacksWallet, setZapState } = useAppStore();
   const { writeContract } = useWriteContract();
   const toast = useToast();
+
+  // Prepare approval transaction data for gas estimation
+  const approvalData = useMemo(() => {
+    if (!amount) return undefined;
+    try {
+      const amountWei = parseUnits(amount, 6);
+      return encodeFunctionData({
+        abi: ERC20_ABI,
+        functionName: 'approve',
+        args: [SEPOLIA_XRESERVE, amountWei],
+      });
+    } catch {
+      return undefined;
+    }
+  }, [amount]);
+
+  const approvalGas = useGasEstimation(
+    step === 'input' && amount ? SEPOLIA_USDC : undefined,
+    approvalData
+  );
+
+  // Prepare deposit transaction data for gas estimation
+  const depositData = useMemo(() => {
+    if (!amount || !stacksWallet) return undefined;
+    try {
+      const amountWei = parseUnits(amount, 6);
+      const stacksAddressBytes = `0x${stacksWallet.address.split('').map(c => c.charCodeAt(0).toString(16)).join('').padEnd(64, '0')}`;
+      return encodeFunctionData({
+        abi: XRESERVE_ABI,
+        functionName: 'depositForBurn',
+        args: [amountWei, stacksAddressBytes as `0x${string}`],
+      });
+    } catch {
+      return undefined;
+    }
+  }, [amount, stacksWallet]);
+
+  const depositGas = useGasEstimation(
+    step === 'approve' && amount ? SEPOLIA_XRESERVE : undefined,
+    depositData
+  );
 
   const handleApprove = async () => {
     if (!amount || !ethAddress) return;
@@ -207,6 +250,16 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
               <p>• Stacks: {stacksWallet?.address.slice(0, 6)}...{stacksWallet?.address.slice(-4)}</p>
             </div>
 
+            {amount && (
+              <GasFeeDisplay
+                gasPrice={approvalGas.formattedGasPrice}
+                totalCost={approvalGas.formattedTotalCost}
+                estimatedUSD={approvalGas.estimatedUSD}
+                isLoading={approvalGas.isLoading}
+                error={approvalGas.error}
+              />
+            )}
+
             <button
               onClick={handleApprove}
               disabled={!amount || !ethAddress || !stacksWallet}
@@ -221,6 +274,15 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
         {step === 'approve' && (
           <div className="space-y-4">
             <p className="text-slate-300">Approve USDC spending on Ethereum...</p>
+            
+            <GasFeeDisplay
+              gasPrice={depositGas.formattedGasPrice}
+              totalCost={depositGas.formattedTotalCost}
+              estimatedUSD={depositGas.estimatedUSD}
+              isLoading={depositGas.isLoading}
+              error={depositGas.error}
+            />
+            
             <button
               onClick={handleDeposit}
               className="w-full py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors"
