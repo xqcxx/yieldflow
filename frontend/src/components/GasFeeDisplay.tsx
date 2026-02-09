@@ -1,6 +1,7 @@
 interface GasFeeDisplayProps {
   gasPrice: string;
   totalCost: string;
+  estimatedUSD?: string;
   isLoading: boolean;
   error: string | null;
 }
@@ -13,7 +14,8 @@ function getGasPriceIndicator(gasPrice: number): { label: string; color: string 
 
 export function GasFeeDisplay({ 
   gasPrice, 
-  totalCost, 
+  totalCost,
+  estimatedUSD = '0',
   isLoading, 
   error 
 }: GasFeeDisplayProps) {
@@ -54,6 +56,7 @@ export function GasFeeDisplay({
         <div>
           <p className="text-slate-500 text-xs">Total Cost</p>
           <p className="text-slate-200 font-mono">{totalCost} ETH</p>
+          <p className="text-xs text-slate-400">≈ ${estimatedUSD}</p>
         </div>
       </div>
       <p className="text-xs text-slate-500 mt-2">

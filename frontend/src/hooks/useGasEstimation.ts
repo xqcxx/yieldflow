@@ -8,9 +8,13 @@ interface GasEstimate {
   totalCost: bigint;
   formattedGasPrice: string;
   formattedTotalCost: string;
+  estimatedUSD: string;
   isLoading: boolean;
   error: string | null;
 }
+
+// Simplified ETH price (in production, fetch from API)
+const ETH_PRICE_USD = 2400;
 
 export function useGasEstimation(
   to: Address | undefined,
@@ -58,6 +62,9 @@ export function useGasEstimation(
   const formattedTotalCost = totalCost 
     ? (Number(totalCost) / 1e18).toFixed(6) 
     : '0';
+  const estimatedUSD = totalCost 
+    ? ((Number(totalCost) / 1e18) * ETH_PRICE_USD).toFixed(2)
+    : '0';
 
   return {
     gasLimit: gasLimit || 0n,
@@ -65,6 +72,7 @@ export function useGasEstimation(
     totalCost,
     formattedGasPrice,
     formattedTotalCost,
+    estimatedUSD,
     isLoading,
     error,
   };

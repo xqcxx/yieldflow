@@ -254,6 +254,7 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
               <GasFeeDisplay
                 gasPrice={approvalGas.formattedGasPrice}
                 totalCost={approvalGas.formattedTotalCost}
+                estimatedUSD={approvalGas.estimatedUSD}
                 isLoading={approvalGas.isLoading}
                 error={approvalGas.error}
               />
@@ -277,6 +278,7 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
             <GasFeeDisplay
               gasPrice={depositGas.formattedGasPrice}
               totalCost={depositGas.formattedTotalCost}
+              estimatedUSD={depositGas.estimatedUSD}
               isLoading={depositGas.isLoading}
               error={depositGas.error}
             />
