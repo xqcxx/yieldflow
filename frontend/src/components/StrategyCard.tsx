@@ -1,4 +1,8 @@
+import { useDynamicAPY } from '../hooks/useDynamicAPY';
+import { APYDisplay } from './APYDisplay';
+
 interface StrategyCardProps {
+  id: string;
   name: string;
   apy: number;
   tvl: string;
@@ -8,13 +12,15 @@ interface StrategyCardProps {
 }
 
 export function StrategyCard({
+  id,
   name,
-  apy,
+  apy: initialAPY,
   tvl,
   description,
   disabled = false,
   onSelect,
 }: StrategyCardProps) {
+  const { apy, isLoading, error, lastUpdated } = useDynamicAPY(id);
   return (
     <div
       className={`p-6 rounded-xl border transition-all ${
@@ -37,7 +43,12 @@ export function StrategyCard({
       
       <div className="flex gap-6">
         <div>
-          <div className="text-2xl font-bold text-green-400">{apy}%</div>
+          <APYDisplay 
+            apy={apy || initialAPY}
+            isLoading={isLoading}
+            error={error}
+            lastUpdated={lastUpdated}
+          />
           <div className="text-xs text-slate-400">APY</div>
         </div>
         <div>
