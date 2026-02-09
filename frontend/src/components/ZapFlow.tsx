@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useAccount, useWriteContract } from 'wagmi';
-import { parseUnits } from 'viem';
+import { parseUnits, encodeFunctionData } from 'viem';
 import { openContractCall } from '@stacks/connect';
 import { Pc, Cl } from '@stacks/transactions';
 import { useAppStore } from '../stores/appStore';
 import { useToast } from '../contexts/ToastContext';
+import { useGasEstimation } from '../hooks/useGasEstimation';
+import { GasFeeDisplay } from './GasFeeDisplay';
 import {
   SEPOLIA_USDC,
   SEPOLIA_XRESERVE,
@@ -28,6 +30,26 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
   const { stacksWallet, setZapState } = useAppStore();
   const { writeContract } = useWriteContract();
   const toast = useToast();
+
+  // Prepare approval transaction data for gas estimation
+  const approvalData = useMemo(() => {
+    if (!amount) return undefined;
+    try {
+      const amountWei = parseUnits(amount, 6);
+      return encodeFunctionData({
+        abi: ERC20_ABI,
+        functionName: 'approve',
+        args: [SEPOLIA_XRESERVE, amountWei],
+      });
+    } catch {
+      return undefined;
+    }
+  }, [amount]);
+
+  const approvalGas = useGasEstimation(
+    step === 'input' && amount ? SEPOLIA_USDC : undefined,
+    approvalData
+  );
 
   const handleApprove = async () => {
     if (!amount || !ethAddress) return;
@@ -206,6 +228,15 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
               <p>• Connected: {ethAddress?.slice(0, 6)}...{ethAddress?.slice(-4)}</p>
               <p>• Stacks: {stacksWallet?.address.slice(0, 6)}...{stacksWallet?.address.slice(-4)}</p>
             </div>
+
+            {amount && (
+              <GasFeeDisplay
+                gasPrice={approvalGas.formattedGasPrice}
+                totalCost={approvalGas.formattedTotalCost}
+                isLoading={approvalGas.isLoading}
+                error={approvalGas.error}
+              />
+            )}
 
             <button
               onClick={handleApprove}
