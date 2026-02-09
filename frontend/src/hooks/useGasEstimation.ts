@@ -47,7 +47,8 @@ export function useGasEstimation(
     };
 
     fetchGasPrice();
-    const interval = setInterval(fetchGasPrice, 10000); // Update every 10s
+    // Update every 10s for real-time pricing
+    const interval = setInterval(fetchGasPrice, 10000);
     
     return () => clearInterval(interval);
   }, [publicClient]);
