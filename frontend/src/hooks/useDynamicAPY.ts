@@ -51,8 +51,8 @@ export function useDynamicAPY(protocolId: string): APYData {
 
     fetchAPY();
     
-    // Refresh APY every 60 seconds
-    const interval = setInterval(fetchAPY, 60000);
+    // Refresh APY every 30 seconds for more frequent updates
+    const interval = setInterval(fetchAPY, 30000);
     
     return () => clearInterval(interval);
   }, [protocolId]);
