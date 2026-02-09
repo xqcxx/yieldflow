@@ -89,6 +89,16 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
   const handleApprove = async () => {
     if (!amount || !ethAddress) return;
     
+    const numAmount = parseFloat(amount);
+    
+    // Validate minimum amount
+    if (numAmount < 0.01) {
+      const minMsg = 'Minimum amount is 0.01 USDC';
+      setError(minMsg);
+      toast.showError(minMsg);
+      return;
+    }
+    
     // Check if user has sufficient balance
     const amountWei = parseUnits(amount, 6);
     if (amountWei > balance) {
