@@ -4,6 +4,7 @@ import { parseUnits } from 'viem';
 import { openContractCall } from '@stacks/connect';
 import { Pc, Cl } from '@stacks/transactions';
 import { useAppStore } from '../stores/appStore';
+import { useToast } from '../contexts/ToastContext';
 import {
   SEPOLIA_USDC,
   SEPOLIA_XRESERVE,
@@ -26,6 +27,7 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
   const { address: ethAddress } = useAccount();
   const { stacksWallet, setZapState } = useAppStore();
   const { writeContract } = useWriteContract();
+  const toast = useToast();
 
   const handleApprove = async () => {
     if (!amount || !ethAddress) return;
@@ -33,6 +35,7 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
     try {
       setError(null);
       setStep('approve');
+      const loadingToast = toast.showLoading('Approving USDC...');
       const amountWei = parseUnits(amount, 6); // USDC has 6 decimals
       
       writeContract({
@@ -41,11 +44,15 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
         functionName: 'approve',
         args: [SEPOLIA_XRESERVE, amountWei],
       });
+      
+      toast.dismissToast(loadingToast);
+      toast.showSuccess('USDC approval successful!');
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Approval failed';
       console.error('Approval failed:', error);
       setError(errorMsg);
       setZapState({ status: 'error', error: errorMsg });
+      toast.showError(errorMsg);
       setStep('input');
     }
   };
