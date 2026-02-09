@@ -7,6 +7,7 @@ interface ToastContextType {
   showLoading: (message: string) => string;
   dismissToast: (toastId: string) => void;
   showTransactionSuccess: (txHash: string, explorerUrl: string) => void;
+  showTransactionPending: (message: string) => void;
 }
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
@@ -98,6 +99,21 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     );
   };
 
+  const showTransactionPending = (message: string) => {
+    toast(message, {
+      duration: 3000,
+      position: 'top-right',
+      icon: '⏳',
+      style: {
+        background: '#f59e0b',
+        color: '#fff',
+        border: '1px solid #fbbf24',
+        padding: '16px',
+        borderRadius: '8px',
+      },
+    });
+  };
+
   return (
     <ToastContext.Provider
       value={{
@@ -106,6 +122,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         showLoading,
         dismissToast,
         showTransactionSuccess,
+        showTransactionPending,
       }}
     >
       <Toaster />
