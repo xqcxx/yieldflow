@@ -6,7 +6,9 @@ import { Pc, Cl } from '@stacks/transactions';
 import { useAppStore } from '../stores/appStore';
 import { useToast } from '../contexts/ToastContext';
 import { useGasEstimation } from '../hooks/useGasEstimation';
+import { useUSDCBalance } from '../hooks/useUSDCBalance';
 import { GasFeeDisplay } from './GasFeeDisplay';
+import { BalanceDisplay } from './BalanceDisplay';
 import {
   SEPOLIA_USDC,
   SEPOLIA_XRESERVE,
@@ -30,6 +32,7 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
   const { stacksWallet, setZapState } = useAppStore();
   const { writeContract } = useWriteContract();
   const toast = useToast();
+  const { balance, formattedBalance, isLoading: balanceLoading, error: balanceError, refetch: refetchBalance } = useUSDCBalance();
 
   // Prepare approval transaction data for gas estimation
   const approvalData = useMemo(() => {
@@ -72,14 +75,43 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
     depositData
   );
 
+  // Check if amount exceeds balance
+  const hasInsufficientBalance = useMemo(() => {
+    if (!amount || !balance) return false;
+    try {
+      const amountWei = parseUnits(amount, 6);
+      return amountWei > balance;
+    } catch {
+      return false;
+    }
+  }, [amount, balance]);
+
   const handleApprove = async () => {
     if (!amount || !ethAddress) return;
+    
+    const numAmount = parseFloat(amount);
+    
+    // Validate minimum amount
+    if (numAmount < 0.01) {
+      const minMsg = 'Minimum amount is 0.01 USDC';
+      setError(minMsg);
+      toast.showError(minMsg);
+      return;
+    }
+    
+    // Check if user has sufficient balance
+    const amountWei = parseUnits(amount, 6);
+    if (amountWei > balance) {
+      const insufficientMsg = `Insufficient balance. You have ${formattedBalance} USDC but need ${amount} USDC`;
+      setError(insufficientMsg);
+      toast.showError(insufficientMsg);
+      return;
+    }
     
     try {
       setError(null);
       setStep('approve');
       const loadingToast = toast.showLoading('Approving USDC...');
-      const amountWei = parseUnits(amount, 6); // USDC has 6 decimals
       
       writeContract({
         address: SEPOLIA_USDC,
@@ -90,6 +122,8 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
       
       toast.dismissToast(loadingToast);
       toast.showSuccess('USDC approval successful!');
+      // Refetch balance after approval
+      setTimeout(() => refetchBalance(), 2000);
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Approval failed';
       console.error('Approval failed:', error);
@@ -124,6 +158,8 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
       
       toast.dismissToast(loadingToast);
       toast.showSuccess('Deposit initiated! Bridging to Stacks...');
+      // Refetch balance after deposit
+      setTimeout(() => refetchBalance(), 2000);
       setStep('bridge');
       setZapState({ 
         status: 'bridging',
@@ -236,19 +272,42 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
               <label className="block text-sm text-slate-400 mb-2">
                 Amount (USDC)
               </label>
-              <input
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="0.00"
-                className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg focus:border-blue-500 focus:outline-none"
-              />
+              <div className="relative">
+                <input
+                  type="number"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="0.00"
+                  className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg focus:border-blue-500 focus:outline-none pr-20"
+                />
+                <button
+                  onClick={() => setAmount(formattedBalance)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm font-medium transition-colors"
+                  type="button"
+                >
+                  MAX
+                </button>
+              </div>
             </div>
             
             <div className="text-sm text-slate-400">
               <p>• Connected: {ethAddress?.slice(0, 6)}...{ethAddress?.slice(-4)}</p>
               <p>• Stacks: {stacksWallet?.address.slice(0, 6)}...{stacksWallet?.address.slice(-4)}</p>
             </div>
+
+            <BalanceDisplay 
+              balance={formattedBalance}
+              isLoading={balanceLoading}
+              error={balanceError}
+            />
+
+            {hasInsufficientBalance && (
+              <div className="bg-yellow-900/20 border border-yellow-600 rounded-lg p-3 text-sm">
+                <p className="text-yellow-400">
+                  ⚠️ Amount exceeds your balance
+                </p>
+              </div>
+            )}
 
             {amount && (
               <GasFeeDisplay
@@ -262,10 +321,10 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
 
             <button
               onClick={handleApprove}
-              disabled={!amount || !ethAddress || !stacksWallet}
+              disabled={!amount || !ethAddress || !stacksWallet || hasInsufficientBalance}
               className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-600 disabled:cursor-not-allowed rounded-lg font-medium transition-colors"
             >
-              Start Zap
+              {hasInsufficientBalance ? 'Insufficient Balance' : 'Start Zap'}
             </button>
           </div>
         )}
