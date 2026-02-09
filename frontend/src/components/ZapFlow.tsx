@@ -32,7 +32,7 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
   const { stacksWallet, setZapState } = useAppStore();
   const { writeContract } = useWriteContract();
   const toast = useToast();
-  const { balance, formattedBalance, isLoading: balanceLoading, error: balanceError } = useUSDCBalance();
+  const { balance, formattedBalance, isLoading: balanceLoading, error: balanceError, refetch: refetchBalance } = useUSDCBalance();
 
   // Prepare approval transaction data for gas estimation
   const approvalData = useMemo(() => {
@@ -112,6 +112,8 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
       
       toast.dismissToast(loadingToast);
       toast.showSuccess('USDC approval successful!');
+      // Refetch balance after approval
+      setTimeout(() => refetchBalance(), 2000);
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Approval failed';
       console.error('Approval failed:', error);
@@ -146,6 +148,8 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
       
       toast.dismissToast(loadingToast);
       toast.showSuccess('Deposit initiated! Bridging to Stacks...');
+      // Refetch balance after deposit
+      setTimeout(() => refetchBalance(), 2000);
       setStep('bridge');
       setZapState({ 
         status: 'bridging',
