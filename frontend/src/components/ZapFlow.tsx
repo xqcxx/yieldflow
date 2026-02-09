@@ -64,6 +64,7 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
       setError(null);
       setStep('deposit');
       setZapState({ status: 'depositing' });
+      const loadingToast = toast.showLoading('Depositing to bridge...');
       
       const amountWei = parseUnits(amount, 6);
       
@@ -78,6 +79,8 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
         args: [amountWei, stacksAddressBytes as `0x${string}`],
       });
       
+      toast.dismissToast(loadingToast);
+      toast.showSuccess('Deposit initiated! Bridging to Stacks...');
       setStep('bridge');
       setZapState({ 
         status: 'bridging',
@@ -89,6 +92,7 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
       console.error('Deposit failed:', error);
       setError(errorMsg);
       setZapState({ status: 'error', error: errorMsg });
+      toast.showError(errorMsg);
       setStep('approve');
     }
   };
