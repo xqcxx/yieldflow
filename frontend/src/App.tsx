@@ -74,6 +74,7 @@ function App() {
             {STRATEGIES.map((strat) => (
               <StrategyCard
                 key={strat.id}
+                id={strat.id}
                 name={strat.name}
                 apy={strat.apy}
                 tvl={strat.tvl}
