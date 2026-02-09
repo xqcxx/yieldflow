@@ -5,6 +5,12 @@ interface GasFeeDisplayProps {
   error: string | null;
 }
 
+function getGasPriceIndicator(gasPrice: number): { label: string; color: string } {
+  if (gasPrice < 20) return { label: 'Low', color: 'text-green-400' };
+  if (gasPrice < 50) return { label: 'Medium', color: 'text-yellow-400' };
+  return { label: 'High', color: 'text-red-400' };
+}
+
 export function GasFeeDisplay({ 
   gasPrice, 
   totalCost, 
@@ -41,6 +47,9 @@ export function GasFeeDisplay({
         <div>
           <p className="text-slate-500 text-xs">Gas Price</p>
           <p className="text-slate-200 font-mono">{gasPrice} Gwei</p>
+          <p className={`text-xs font-medium ${getGasPriceIndicator(parseFloat(gasPrice)).color}`}>
+            {getGasPriceIndicator(parseFloat(gasPrice)).label}
+          </p>
         </div>
         <div>
           <p className="text-slate-500 text-xs">Total Cost</p>
