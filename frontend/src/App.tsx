@@ -4,6 +4,7 @@ import { StacksWalletButton } from './components/StacksWalletButton';
 import { StrategyCard } from './components/StrategyCard';
 import { ZapFlow } from './components/ZapFlow';
 import { STRATEGIES } from './lib/constants';
+import { ToastProvider } from './contexts/ToastContext';
 
 function App() {
   const [selectedStrategy, setSelectedStrategy] = useState<string | null>(null);
@@ -11,6 +12,7 @@ function App() {
   const strategy = STRATEGIES.find((s) => s.id === selectedStrategy);
 
   return (
+    <ToastProvider>
     <div className="min-h-screen bg-slate-900">
       {/* Header */}
       <header className="border-b border-slate-800">
@@ -125,6 +127,7 @@ function App() {
         </div>
       </footer>
     </div>
+    </ToastProvider>
   );
 }
 

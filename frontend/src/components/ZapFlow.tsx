@@ -4,6 +4,7 @@ import { parseUnits } from 'viem';
 import { openContractCall } from '@stacks/connect';
 import { Pc, Cl } from '@stacks/transactions';
 import { useAppStore } from '../stores/appStore';
+import { useToast } from '../contexts/ToastContext';
 import {
   SEPOLIA_USDC,
   SEPOLIA_XRESERVE,
@@ -26,6 +27,7 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
   const { address: ethAddress } = useAccount();
   const { stacksWallet, setZapState } = useAppStore();
   const { writeContract } = useWriteContract();
+  const toast = useToast();
 
   const handleApprove = async () => {
     if (!amount || !ethAddress) return;
@@ -33,6 +35,7 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
     try {
       setError(null);
       setStep('approve');
+      const loadingToast = toast.showLoading('Approving USDC...');
       const amountWei = parseUnits(amount, 6); // USDC has 6 decimals
       
       writeContract({
@@ -41,11 +44,15 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
         functionName: 'approve',
         args: [SEPOLIA_XRESERVE, amountWei],
       });
+      
+      toast.dismissToast(loadingToast);
+      toast.showSuccess('USDC approval successful!');
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Approval failed';
       console.error('Approval failed:', error);
       setError(errorMsg);
       setZapState({ status: 'error', error: errorMsg });
+      toast.showError(errorMsg);
       setStep('input');
     }
   };
@@ -57,6 +64,7 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
       setError(null);
       setStep('deposit');
       setZapState({ status: 'depositing' });
+      const loadingToast = toast.showLoading('Depositing to bridge...');
       
       const amountWei = parseUnits(amount, 6);
       
@@ -71,6 +79,8 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
         args: [amountWei, stacksAddressBytes as `0x${string}`],
       });
       
+      toast.dismissToast(loadingToast);
+      toast.showSuccess('Deposit initiated! Bridging to Stacks...');
       setStep('bridge');
       setZapState({ 
         status: 'bridging',
@@ -82,6 +92,7 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
       console.error('Deposit failed:', error);
       setError(errorMsg);
       setZapState({ status: 'error', error: errorMsg });
+      toast.showError(errorMsg);
       setStep('approve');
     }
   };
@@ -93,6 +104,7 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
       setError(null);
       setStep('finalize');
       setZapState({ status: 'finalizing' });
+      const loadingToast = toast.showLoading('Finalizing deposit on Stacks...');
       
       const amountMicroUnits = BigInt(parseFloat(amount) * 1_000_000);
       
@@ -114,11 +126,18 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
           console.log('Stacks tx:', data.txId);
           setTxHash(data.txId);
           setZapState({ status: 'complete' });
+          toast.dismissToast(loadingToast);
+          toast.showTransactionSuccess(
+            data.txId,
+            'https://explorer.hiro.so/txid/'
+          );
         },
         onCancel: () => {
           const cancelMsg = 'Transaction cancelled by user';
           setError(cancelMsg);
           setZapState({ status: 'error', error: cancelMsg });
+          toast.dismissToast(loadingToast);
+          toast.showError(cancelMsg);
           setStep('bridge');
         },
       });
@@ -127,6 +146,7 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
       console.error('Finalize failed:', error);
       setError(errorMsg);
       setZapState({ status: 'error', error: errorMsg });
+      toast.showError(errorMsg);
       setStep('bridge');
     }
   };
