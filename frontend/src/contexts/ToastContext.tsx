@@ -17,8 +17,15 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       duration: 4000,
       position: 'top-right',
       style: {
-        background: '#10b981',
+        background: '#059669',
         color: '#fff',
+        border: '1px solid #10b981',
+        padding: '16px',
+        borderRadius: '8px',
+      },
+      iconTheme: {
+        primary: '#10b981',
+        secondary: '#fff',
       },
     });
   };
@@ -28,8 +35,15 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       duration: 5000,
       position: 'top-right',
       style: {
-        background: '#ef4444',
+        background: '#dc2626',
         color: '#fff',
+        border: '1px solid #ef4444',
+        padding: '16px',
+        borderRadius: '8px',
+      },
+      iconTheme: {
+        primary: '#ef4444',
+        secondary: '#fff',
       },
     });
   };
@@ -38,8 +52,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     return toast.loading(message, {
       position: 'top-right',
       style: {
-        background: '#3b82f6',
+        background: '#2563eb',
         color: '#fff',
+        border: '1px solid #3b82f6',
+        padding: '16px',
+        borderRadius: '8px',
       },
     });
   };
@@ -54,7 +71,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         <div>
           <p className="font-medium mb-1">Transaction Confirmed!</p>
           <a
-            href={`${explorerUrl}${txHash}`}
+            href={`${explorerUrl}${txHash}?chain=testnet`}
             target="_blank"
             rel="noopener noreferrer"
             className="text-sm underline hover:opacity-80"
@@ -67,8 +84,15 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         duration: 6000,
         position: 'top-right',
         style: {
-          background: '#10b981',
+          background: '#059669',
           color: '#fff',
+          border: '1px solid #10b981',
+          padding: '16px',
+          borderRadius: '8px',
+        },
+        iconTheme: {
+          primary: '#10b981',
+          secondary: '#fff',
         },
       }
     );
