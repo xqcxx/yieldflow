@@ -75,6 +75,17 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
     depositData
   );
 
+  // Check if amount exceeds balance
+  const hasInsufficientBalance = useMemo(() => {
+    if (!amount || !balance) return false;
+    try {
+      const amountWei = parseUnits(amount, 6);
+      return amountWei > balance;
+    } catch {
+      return false;
+    }
+  }, [amount, balance]);
+
   const handleApprove = async () => {
     if (!amount || !ethAddress) return;
     
@@ -267,6 +278,14 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
               error={balanceError}
             />
 
+            {hasInsufficientBalance && (
+              <div className="bg-yellow-900/20 border border-yellow-600 rounded-lg p-3 text-sm">
+                <p className="text-yellow-400">
+                  ⚠️ Amount exceeds your balance
+                </p>
+              </div>
+            )}
+
             {amount && (
               <GasFeeDisplay
                 gasPrice={approvalGas.formattedGasPrice}
@@ -279,10 +298,10 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
 
             <button
               onClick={handleApprove}
-              disabled={!amount || !ethAddress || !stacksWallet}
+              disabled={!amount || !ethAddress || !stacksWallet || hasInsufficientBalance}
               className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-600 disabled:cursor-not-allowed rounded-lg font-medium transition-colors"
             >
-              Start Zap
+              {hasInsufficientBalance ? 'Insufficient Balance' : 'Start Zap'}
             </button>
           </div>
         )}
