@@ -27,11 +27,18 @@ export function useGasEstimation(
 
   const publicClient = usePublicClient();
 
-  const { data: gasLimit } = useEstimateGas({
+  const { data: gasLimit, error: gasLimitError } = useEstimateGas({
     to,
     data,
     value,
   });
+
+  useEffect(() => {
+    if (gasLimitError) {
+      setError('Unable to estimate gas limit');
+      console.error('Gas limit estimation error:', gasLimitError);
+    }
+  }, [gasLimitError]);
 
   useEffect(() => {
     const fetchGasPrice = async () => {
