@@ -258,13 +258,22 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
               <label className="block text-sm text-slate-400 mb-2">
                 Amount (USDC)
               </label>
-              <input
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="0.00"
-                className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg focus:border-blue-500 focus:outline-none"
-              />
+              <div className="relative">
+                <input
+                  type="number"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="0.00"
+                  className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg focus:border-blue-500 focus:outline-none pr-20"
+                />
+                <button
+                  onClick={() => setAmount(formattedBalance)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm font-medium transition-colors"
+                  type="button"
+                >
+                  MAX
+                </button>
+              </div>
             </div>
             
             <div className="text-sm text-slate-400">
