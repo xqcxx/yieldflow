@@ -12,7 +12,7 @@ export {
   isValidStacksAddress,
   getStacksAddressType,
   type StacksAddress,
-} from './stacksAddressEncoder';
+} from '../stacksAddressEncoder';
 
 // Batch utilities
 export {
@@ -31,7 +31,7 @@ export {
   type BatchDecodingResult,
   type BatchValidationResult,
   type AddressDetails,
-} from './addressEncodingUtils';
+} from '../addressEncodingUtils';
 
 // Address book
 export {
@@ -39,4 +39,30 @@ export {
   addressBook,
   type AddressBookEntry,
   type AddressBook,
-} from './addressBook';
+} from '../addressBook';
+
+// Performance optimizations
+export {
+  encodeStacksAddressCached,
+  isValidStacksAddressCached,
+  batchEncodeWithCache,
+  prewarmCache,
+  getCacheStats,
+  clearAddressCache,
+  createDebouncedValidator,
+  createMemoizedFormatter,
+} from './performance';
+
+// Constants
+export {
+  C32_ALPHABET,
+  C32_VALUES,
+  ADDRESS_PREFIXES,
+  ADDRESS_LENGTHS,
+  XRESERVE_FORMAT,
+  ADDRESS_VERSIONS,
+  TEST_ADDRESSES,
+  ERROR_MESSAGES,
+  VALIDATION_PATTERNS,
+  ADDRESS_BOOK_CONSTANTS,
+} from './constants';
