@@ -16,6 +16,7 @@ import {
   ERC20_ABI,
   XRESERVE_ABI,
 } from '../lib/constants';
+import { encodeStacksAddressForXReserve } from '../lib/stacksAddressEncoder';
 
 interface ZapFlowProps {
   strategyName: string;
@@ -59,11 +60,12 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
     if (!amount || !stacksWallet) return undefined;
     try {
       const amountWei = parseUnits(amount, 6);
-      const stacksAddressBytes = `0x${stacksWallet.address.split('').map(c => c.charCodeAt(0).toString(16)).join('').padEnd(64, '0')}`;
+      // Properly encode Stacks address for xReserve bridge
+      const stacksAddressBytes = encodeStacksAddressForXReserve(stacksWallet.address);
       return encodeFunctionData({
         abi: XRESERVE_ABI,
         functionName: 'depositForBurn',
-        args: [amountWei, stacksAddressBytes as `0x${string}`],
+        args: [amountWei, stacksAddressBytes],
       });
     } catch {
       return undefined;
@@ -145,15 +147,15 @@ export function ZapFlow({ strategyName, onClose }: ZapFlowProps) {
       
       const amountWei = parseUnits(amount, 6);
       
-      // Convert Stacks address to bytes32 for xReserve
-      // This is a simplified version - in production you'd need proper encoding
-      const stacksAddressBytes = `0x${stacksWallet.address.split('').map(c => c.charCodeAt(0).toString(16)).join('').padEnd(64, '0')}`;
+      // Properly encode Stacks address to bytes32 for xReserve bridge
+      // Uses proper c32 decoding and version/hash160 extraction
+      const stacksAddressBytes = encodeStacksAddressForXReserve(stacksWallet.address);
       
       writeContract({
         address: SEPOLIA_XRESERVE,
         abi: XRESERVE_ABI,
         functionName: 'depositForBurn',
-        args: [amountWei, stacksAddressBytes as `0x${string}`],
+        args: [amountWei, stacksAddressBytes],
       });
       
       toast.dismissToast(loadingToast);
