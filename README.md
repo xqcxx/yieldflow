@@ -31,11 +31,22 @@ YieldFlow is a cross-chain "Zap" protocol that aggregates the best yield opportu
 - ✅ **Receipt Tokens** - SIP-010 compliant yf-receipt tokens
 - ✅ **21 Passing Tests** - Comprehensive unit test coverage
 - ✅ **Modern UI** - Built with React, TypeScript, and Tailwind CSS
+- ✅ **Monitoring & Analytics** - Real-time metrics, error tracking, alerting, and health monitoring
 
 ## Project Structure
 
 ```
 yieldflow/
+├── analytics/                  # Monitoring, analytics, and alerting
+│   ├── src/                   # Core analytics services
+│   │   ├── AnalyticsService.ts
+│   │   ├── AlertManager.ts
+│   │   ├── HealthMonitor.ts
+│   │   └── ErrorTracker.ts
+│   ├── components/            # Dashboard components
+│   ├── hooks/                 # React hooks for monitoring
+│   ├── tests/                 # Test suite
+│   └── README.md
 ├── contracts/                  # Clarity smart contracts (Clarinet)
 │   ├── contracts/
 │   │   └── mock-vault.clar    # Main vault contract with yield simulation
