@@ -7,15 +7,15 @@
  */
 
 import { bytesToHex, hexToBytes, isHex } from 'viem';
-
-// C32 alphabet for Stacks addresses
-const C32_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
-
-// C32 character to value mapping
-const C32_VALUES: Record<string, number> = {};
-for (let i = 0; i < C32_ALPHABET.length; i++) {
-  C32_VALUES[C32_ALPHABET[i]] = i;
-}
+import {
+  C32_ALPHABET,
+  C32_VALUES,
+  ADDRESS_PREFIXES,
+  ADDRESS_LENGTHS,
+  XRESERVE_FORMAT,
+  ERROR_MESSAGES,
+  VALIDATION_PATTERNS,
+} from './addressEncoding/constants';
 
 export interface StacksAddress {
   version: number;
@@ -66,40 +66,40 @@ function c32Decode(input: string): Uint8Array {
  */
 export function parseStacksAddress(address: string): StacksAddress {
   if (!address || typeof address !== 'string') {
-    throw new Error('Invalid address: must be a non-empty string');
+    throw new Error(ERROR_MESSAGES.INVALID_PREFIX);
   }
 
   // Check prefix
   let type: 'mainnet' | 'testnet';
   let versionChar: string;
   
-  if (address.startsWith('SP')) {
+  if (address.startsWith(ADDRESS_PREFIXES.MAINNET)) {
     type = 'mainnet';
     versionChar = address[2];
-  } else if (address.startsWith('ST')) {
+  } else if (address.startsWith(ADDRESS_PREFIXES.TESTNET)) {
     type = 'testnet';
     versionChar = address[2];
   } else {
-    throw new Error('Invalid Stacks address: must start with SP (mainnet) or ST (testnet)');
+    throw new Error(ERROR_MESSAGES.INVALID_PREFIX);
   }
 
   // Parse version
   const version = C32_VALUES[versionChar];
   if (version === undefined) {
-    throw new Error(`Invalid version character: ${versionChar}`);
+    throw new Error(ERROR_MESSAGES.INVALID_CHARACTER(versionChar));
   }
 
-  // Decode the hash160 portion (remaining 38 characters)
+  // Decode the hash160 portion (remaining characters)
   const c32Data = address.slice(3);
-  if (c32Data.length !== 38) {
-    throw new Error(`Invalid address length: expected 41 characters, got ${address.length}`);
+  if (c32Data.length !== ADDRESS_LENGTHS.HASH160_C32) {
+    throw new Error(ERROR_MESSAGES.INVALID_LENGTH(ADDRESS_LENGTHS.FULL, address.length));
   }
 
   const decoded = c32Decode(c32Data);
   
   // Hash160 should be 20 bytes
-  if (decoded.length !== 20) {
-    throw new Error(`Invalid decoded length: expected 20 bytes, got ${decoded.length}`);
+  if (decoded.length !== ADDRESS_LENGTHS.HASH160_BYTES) {
+    throw new Error(ERROR_MESSAGES.INVALID_HASH160(decoded.length));
   }
 
   return {
@@ -117,13 +117,13 @@ export function encodeStacksAddressForXReserve(address: string): `0x${string}` {
   const parsed = parseStacksAddress(address);
   
   // Create 32-byte buffer
-  const buffer = new Uint8Array(32);
+  const buffer = new Uint8Array(XRESERVE_FORMAT.TOTAL_BYTES);
   
   // Byte 0: Version
   buffer[0] = parsed.version;
   
   // Bytes 1-20: Hash160
-  buffer.set(parsed.hash160, 1);
+  buffer.set(parsed.hash160, XRESERVE_FORMAT.VERSION_BYTES);
   
   // Bytes 21-31: Padding (zeros)
   // Already initialized to 0
@@ -136,7 +136,7 @@ export function encodeStacksAddressForXReserve(address: string): `0x${string}` {
  */
 export function decodeStacksAddressFromXReserve(bytes32: `0x${string}`): string {
   if (!isHex(bytes32) || bytes32.length !== 66) {
-    throw new Error('Invalid bytes32: must be 32 bytes hex string');
+    throw new Error(ERROR_MESSAGES.INVALID_BYTES32);
   }
 
   const bytes = hexToBytes(bytes32);
@@ -145,11 +145,13 @@ export function decodeStacksAddressFromXReserve(bytes32: `0x${string}`): string 
   const version = bytes[0];
   
   // Bytes 1-20: Hash160
-  const hash160 = bytes.slice(1, 21);
+  const hash160Start = XRESERVE_FORMAT.VERSION_BYTES;
+  const hash160End = hash160Start + XRESERVE_FORMAT.HASH160_BYTES;
+  const hash160 = bytes.slice(hash160Start, hash160End);
   
   // Reconstruct c32 address (simplified - full implementation would re-encode)
   // For now, return a placeholder that can be improved
-  const type = version === 22 ? 'SP' : 'ST'; // Simplified version check
+  const type = version === 22 ? ADDRESS_PREFIXES.MAINNET : ADDRESS_PREFIXES.TESTNET; // Simplified version check
   
   // This is a simplified version - full c32 encoding is complex
   // In production, use @stacks/transactions for full encoding
@@ -157,15 +159,14 @@ export function decodeStacksAddressFromXReserve(bytes32: `0x${string}`): string 
 }
 
 /**
- * Validate a Stacks address
+ * Validate a Stacks address using regex patterns
  */
 export function isValidStacksAddress(address: string): boolean {
-  try {
-    parseStacksAddress(address);
-    return true;
-  } catch {
-    return false;
-  }
+  if (!address || typeof address !== 'string') return false;
+  
+  // Use regex patterns for quick validation
+  return VALIDATION_PATTERNS.MAINNET.test(address) || 
+         VALIDATION_PATTERNS.TESTNET.test(address);
 }
 
 /**
