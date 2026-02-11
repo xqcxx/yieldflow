@@ -32,6 +32,7 @@ YieldFlow is a cross-chain "Zap" protocol that aggregates the best yield opportu
 - ✅ **21 Passing Tests** - Comprehensive unit test coverage
 - ✅ **Modern UI** - Built with React, TypeScript, and Tailwind CSS
 - ✅ **Monitoring & Analytics** - Real-time metrics, error tracking, alerting, and health monitoring
+- ✅ **Proper Address Encoding** - Correct c32 decoding for xReserve bridge integration
 
 ## Project Structure
 
@@ -83,6 +84,12 @@ yieldflow/
 - **@stacks/connect** - Stacks wallet connection
 - **Zustand** - State management
 - **TanStack Query** - Data fetching
+
+### Address Encoding
+- **C32 Decoder** - Proper Crockford Base32 decoding for Stacks addresses
+- **xReserve Integration** - Correct bytes32 encoding for bridge operations
+- **Address Book** - Save and manage frequently used addresses
+- **Validation** - Real-time address validation with React hooks
 
 ## Getting Started
 
