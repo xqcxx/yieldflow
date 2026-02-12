@@ -27,6 +27,7 @@ YieldFlow is a cross-chain "Zap" protocol that aggregates the best yield opportu
 
 - ✅ **Dual Wallet Integration** - MetaMask (Ethereum) + Leather (Stacks)
 - ✅ **Ethereum Mainnet Support** - Full production network support (not just testnet)
+- ✅ **Stacks Mainnet Deployment** - Ready for production deployment
 - ✅ **USDCx Bridging** - Powered by Circle's xReserve protocol
 - ✅ **Mock Vault Contract** - Time-based yield simulation (12% APY)
 - ✅ **Receipt Tokens** - SIP-010 compliant yf-receipt tokens
