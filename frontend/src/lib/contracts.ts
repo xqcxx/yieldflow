@@ -1,0 +1,15 @@
+export const MAINNET_CONTRACTS = {
+  USDC: '0xA0b86a33E6441e0A421e56E4773C3C4b0Db7E5d0',
+  xReserve: '0x008888878f94C0d87defdf0B07f46B93C1934442',
+  xReserveBurn: '0x008888878f94C0d87defdf0B07f46B93C1934443',
+} as const;
+
+export const SEPOLIA_CONTRACTS = {
+  USDC: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
+  xReserve: '0x008888878f94C0d87defdf0B07f46B93C1934442',
+  xReserveBurn: '0x008888878f94C0d87defdf0B07f46B93C1934443',
+} as const;
+
+export function getContracts(isMainnet: boolean) {
+  return isMainnet ? MAINNET_CONTRACTS : SEPOLIA_CONTRACTS;
+}
