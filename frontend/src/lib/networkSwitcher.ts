@@ -21,6 +21,17 @@ export async function switchToSepolia() {
   }
 }
 
+export function getChainName(chainId: number): string {
+  switch (chainId) {
+    case mainnet.id:
+      return 'Ethereum Mainnet';
+    case sepolia.id:
+      return 'Sepolia Testnet';
+    default:
+      return 'Unknown Network';
+  }
+}
+
 export function isMainnet(chainId: number): boolean {
   return chainId === mainnet.id;
 }

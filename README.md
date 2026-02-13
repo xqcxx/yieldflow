@@ -26,7 +26,7 @@ YieldFlow is a cross-chain "Zap" protocol that aggregates the best yield opportu
 ## Features
 
 - ✅ **Dual Wallet Integration** - MetaMask (Ethereum) + Leather (Stacks)
-- ✅ **Ethereum Mainnet Support** - Full production network support (not just testnet)
+- ✅ **Ethereum Mainnet Support** - Full production network with advanced features
 - ✅ **Stacks Mainnet Deployment** - Ready for production deployment
 - ✅ **Multi-Strategy Portfolio** - Allocate across multiple yield strategies
 - ✅ **Real DeFi Integration** - Zest, Bitflow, and Velar protocols
@@ -39,6 +39,7 @@ YieldFlow is a cross-chain "Zap" protocol that aggregates the best yield opportu
 - ✅ **Modern UI** - Built with React, TypeScript, and Tailwind CSS
 - ✅ **Monitoring & Analytics** - Real-time metrics, error tracking, alerting, and health monitoring
 - ✅ **Proper Address Encoding** - Correct c32 decoding for xReserve bridge integration
+- ✅ **Network Switching** - Seamless mainnet/testnet switching
 
 ## Project Structure
 
