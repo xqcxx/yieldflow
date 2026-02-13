@@ -29,7 +29,7 @@ YieldFlow is a cross-chain "Zap" protocol that aggregates the best yield opportu
 - ✅ **Ethereum Mainnet Support** - Full production network with advanced features
 - ✅ **Stacks Mainnet Deployment** - Complete deployment pipeline with scripts
 - ✅ **Multi-Strategy Portfolio** - Advanced allocation with rebalancing and risk management
-- ✅ **Real DeFi Integration** - Zest, Bitflow, and Velar protocols
+- ✅ **Real DeFi Integration** - Comprehensive protocol integrations with risk assessment
 - ✅ **Zap Out Feature** - Withdraw from Stacks back to Ethereum
 - ✅ **USDCx Bridging** - Powered by Circle's xReserve protocol
 - ✅ **Mock Vault Contract** - Time-based yield simulation (12% APY)
